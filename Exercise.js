@@ -47,7 +47,7 @@ var scene = {
     farPlane: 30.0,
     fov: 40,
     lights: [
-        { pos:[-1, 1, -1],color: [1,1,1] },
+        { pos:[0, 0, -5],color: [1,1,1] },
     ],
     rotateObjects: true,
     angle: 0,
@@ -207,7 +207,7 @@ function draw() {
     drawingObjects.solidCube.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, ctx.aVertexTextureCoordId, textures.textureObject0);
 
     // RIGHT SIDE
-    mat4.translate(modelViewMatrix, viewMatrix, [2.5, 0, -2]);
+    mat4.translate(modelViewMatrix, viewMatrix, [3, 0, -2]);
     mat4.scale(modelViewMatrix, modelViewMatrix, [1.0, 3, 10]);
     //mat4.rotate(modelViewMatrix, modelViewMatrix, scene.angle, [0, 1, 1]);
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
