@@ -40,7 +40,7 @@ var textures = {
 
 // parameters that define the scene
 var scene = {
-    eyePosition: [0, 1, 5],
+    eyePosition: [0, 0, 5],
     lookAtPosition: [0, 0, 0],
     upVector: [0, 1, 0],
     nearPlane: 0.1,
