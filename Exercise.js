@@ -248,7 +248,7 @@ function draw() {
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
-    drawingObjects.solidSphere.drawWithColor(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, [1, 0, 0]);
+    drawingObjects.solidSphere.drawWithColor(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, [1, 1, 1]);
 }
 
 var first = true;
