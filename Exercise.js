@@ -40,14 +40,15 @@ var textures = {
 
 // parameters that define the scene
 var scene = {
-    eyePosition: [0, 1, -5],
+    eyePosition: [0, 1, 5],
     lookAtPosition: [0, 0, 0],
     upVector: [0, 1, 0],
     nearPlane: 0.1,
     farPlane: 30.0,
     fov: 40,
-    lightPosition: [-0, 0, -0],
-    lightColor: [1, 0, 0],
+    lights: [
+        { pos:[-1, 1, -1],color: [1,1,1] },
+    ],
     rotateObjects: true,
     angle: 0,
     angularSpeed: 0.025 * 2 * Math.PI / 360.0
@@ -188,24 +189,54 @@ function draw() {
 
     // set the light
     gl.uniform1i(ctx.uEnableLightingId, 1);
-    gl.uniform3fv(ctx.uLightPositionId, scene.lightPosition);
-    gl.uniform3fv(ctx.uLightColorId, scene.lightColor);
+    for (let light of scene.lights) {
+        gl.uniform3fv(ctx.uLightPositionId, light.pos);
+        gl.uniform3fv(ctx.uLightColorId, light.color);
+    }
 
     // same projection matrix for all drawings, so it can be specified here
     gl.uniformMatrix4fv(ctx.uProjectionMatrixId, false, projectionMatrix);
 
-    // translate and rotate objects
-    mat4.translate(modelViewMatrix, viewMatrix, [1.0, 1.0, 0]);
-    mat4.rotate(modelViewMatrix, modelViewMatrix, scene.angle, [1, 1, 0]);
+    // LEFT SIDE
+    mat4.translate(modelViewMatrix, viewMatrix, [-3, 0, -2]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [1.0, 3, 10]);
+    //mat4.rotate(modelViewMatrix, modelViewMatrix, scene.angle, [1, 1, 0]);
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
     drawingObjects.solidCube.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, ctx.aVertexTextureCoordId, textures.textureObject0);
 
+    // RIGHT SIDE
+    mat4.translate(modelViewMatrix, viewMatrix, [2.5, 0, -2]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [1.0, 3, 10]);
+    //mat4.rotate(modelViewMatrix, modelViewMatrix, scene.angle, [0, 1, 1]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+    drawingObjects.solidCube.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, ctx.aVertexTextureCoordId, textures.textureObject0);
 
-    // translate and rotate objects
-    mat4.translate(modelViewMatrix, viewMatrix, [-1.0, 1.0, 0]);
-    mat4.rotate(modelViewMatrix, modelViewMatrix, scene.angle, [0, 1, 1]);
+    // TOP
+    mat4.translate(modelViewMatrix, viewMatrix, [0, 2, -2]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [5, 1, 10]);
+    //mat4.rotate(modelViewMatrix, modelViewMatrix, scene.angle, [0, 1, 1]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+    drawingObjects.solidCube.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, ctx.aVertexTextureCoordId, textures.textureObject0);
+
+    // BOTTOM
+    mat4.translate(modelViewMatrix, viewMatrix, [0, -2, -2]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [5, 1, 10]);
+    //mat4.rotate(modelViewMatrix, modelViewMatrix, scene.angle, [0, 1, 1]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+    drawingObjects.solidCube.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, ctx.aVertexTextureCoordId, textures.textureObject0);
+
+    // back
+    mat4.translate(modelViewMatrix, viewMatrix, [0, 0, -7.5]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [5, 3, 1]);
+    //mat4.rotate(modelViewMatrix, modelViewMatrix, scene.angle, [0, 1, 1]);
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
@@ -213,7 +244,7 @@ function draw() {
 
     // draw sphere
     mat4.translate(modelViewMatrix, viewMatrix, [0.0, 0.0, -1.0]);
-    mat4.scale(modelViewMatrix, modelViewMatrix, [0.6, 0.6, 0.6]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [0.2, 0.2, 0.2]);
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
