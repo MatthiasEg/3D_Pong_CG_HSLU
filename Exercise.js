@@ -54,10 +54,17 @@ var scene = {
     angularSpeed: 0.025 * 2 * Math.PI / 360.0
 };
 
+//ball
+var ball = {
+    position: [0, 0, 0],
+    moveDirection: [0.08, 0.09, 0.07]
+};
+
 // defined object
 var drawingObjects = {
     solidCube: null,
-    solidSphere: null
+    solidSphere: null,
+    wireFrame: null
 };
 
 /**
@@ -129,6 +136,7 @@ function defineObjects() {
         [0.0, 1.0, 1.0],
         [1.0, 0.0, 1.0]);
     drawingObjects.solidSphere = new SolidSphere(gl, 40, 40);
+    drawingObjects.wireFrame = new WireFrame(gl, [1.0, 1.0, 1.0, 1.0]);
 }
 
 /**
@@ -152,6 +160,31 @@ function setUpAttributesAndUniforms(){
     ctx.uLightPositionId = gl.getUniformLocation(ctx.shaderProgram, "uLightPosition");
     ctx.uLightColorId = gl.getUniformLocation(ctx.shaderProgram, "uLightColor");
     ctx.uEnableLightingId = gl.getUniformLocation(ctx.shaderProgram, "uEnableLighting");
+}
+
+/**
+ * Calculate the movement of the ball
+ */
+function moveBall(){
+    //detect ball on top and bottom
+    if (Math.abs(ball.position[0]) >= 2.4) {
+        ball.moveDirection[0] *= -1;
+    }
+    if (Math.abs(ball.position[1]) >= 2.4) {
+        ball.moveDirection[1] *= -1;
+    }
+    //front
+    if (ball.position[2] >= 2) {
+        ball.moveDirection[2] *= -1;
+    }
+    //back
+    if (ball.position[2] <= -7) {
+        ball.moveDirection[2] *= -1;
+    }
+
+    ball.position[0] += ball.moveDirection[0];
+    ball.position[1] += ball.moveDirection[1];
+    ball.position[2] += ball.moveDirection[2];
 }
 
 /**
@@ -243,12 +276,21 @@ function draw() {
     drawingObjects.solidCube.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, ctx.aVertexTextureCoordId, textures.textureObject0);
 
     // draw sphere
-    mat4.translate(modelViewMatrix, viewMatrix, [0.0, 0.0, -1.0]);
-    mat4.scale(modelViewMatrix, modelViewMatrix, [0.2, 0.2, 0.2]);
+    moveBall()
+    mat4.translate(modelViewMatrix, viewMatrix, ball.position);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [0.1, 0.1, 0.1]);
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
     drawingObjects.solidSphere.drawWithColor(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, [1, 1, 1]);
+
+    // frame of ball position
+    mat4.translate(modelViewMatrix, viewMatrix, [0, 0, ball.position[2]]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [2.4, 2.4, 0]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+    drawingObjects.wireFrame.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId);
 }
 
 var first = true;
