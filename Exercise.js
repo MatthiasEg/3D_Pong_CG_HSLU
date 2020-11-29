@@ -223,7 +223,8 @@ function draw() {
     // set the light
     gl.uniform1i(ctx.uEnableLightingId, 1);
     for (let light of scene.lights) {
-        gl.uniform3fv(ctx.uLightPositionId, light.pos);
+        //gl.uniform3fv(ctx.uLightPositionId, light.pos);
+        gl.uniform3fv(ctx.uLightPositionId, ball.position);
         gl.uniform3fv(ctx.uLightColorId, light.color);
     }
 
