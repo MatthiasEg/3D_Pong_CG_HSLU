@@ -4,11 +4,6 @@
 // WebGL Exercises
 //
 
-// Turn Texture Mapping on and off
-// Add Transformation
-// Add 3D functionality
-// Add shading
-
 // Register function to call after document has loaded
 window.onload = startup;
 
@@ -35,7 +30,8 @@ var ctx = {
 
 // loaded textures
 var textures = {
-    textureObject0: {}
+    textureObject0: {},
+    textureObject1: {}
 };
 
 // parameters that define the scene
@@ -47,7 +43,7 @@ var scene = {
     farPlane: 30.0,
     fov: 65,
     lights: [
-        { pos:[0, 0, -5],color: [1,1,1] },
+        { pos:[0, 0, -4], color: [1,1,1] },
     ],
     rotateObjects: true,
     angle: 0,
@@ -60,11 +56,25 @@ var ball = {
     moveDirection: [0.08, 0.09, 0.07]
 };
 
+var playerPaddle = {
+    position : [0, 0, 2],
+    moveDirection: [0.04, 0.04]
+}
+
 // defined object
 var drawingObjects = {
     solidCube: null,
     solidSphere: null,
-    wireFrame: null
+    wireFrame: null,
+    playerPaddle: null
+};
+
+// Key Handling
+var key = {
+    A: 97,
+    D: 100,
+    W: 119,
+    S: 115,
 };
 
 /**
@@ -116,15 +126,23 @@ function initTexture(image, textureObject) {
  * Load an image as a texture
  */
 function loadTexture() {
-    var image = new Image();
+    var image_walls = new Image();
+    var image_paddle = new Image();
+
     // create a texture object
     textures.textureObject0 = gl.createTexture();
-    image.onload = function() {
-        console.log("Image loaded");
-        initTexture(image, textures.textureObject0);
+    textures.textureObject1 = gl.createTexture();
+    image_walls.onload = function() {
+        console.log("Image for walls loaded");
+        initTexture(image_walls, textures.textureObject0);
+    };
+    image_paddle.onload = function () {
+        console.log("Image for paddles loaded");
+        initTexture(image_paddle, textures.textureObject1);
     };
     // setting the src will trigger onload
-    image.src = "lena512.png";
+    image_walls.src = "textures/stone.jpeg";
+    image_paddle.src = "textures/stone_brick.jpeg";
 }
 
 function defineObjects() {
@@ -137,6 +155,12 @@ function defineObjects() {
         [1.0, 0.0, 1.0]);
     drawingObjects.solidSphere = new SolidSphere(gl, 40, 40);
     drawingObjects.wireFrame = new WireFrame(gl, [1.0, 1.0, 1.0, 1.0]);
+    drawingObjects.playerPaddle = new SolidRectangle(gl, [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]);
 }
 
 /**
@@ -188,6 +212,22 @@ function moveBall(){
 }
 
 /**
+ * Calculate the movement of the player paddle
+ */
+function movePlayerPaddle() {
+    if(Math.abs(playerPaddle.position[0]) >= 2.2) {
+        playerPaddle.moveDirection[0] *= -1;
+    }
+
+    if(Math.abs(playerPaddle.position[1]) >= 1.7) {
+        playerPaddle.moveDirection[1] *= -1;
+    }
+
+    playerPaddle.position[0] += playerPaddle.moveDirection[0];
+    playerPaddle.position[1] += playerPaddle.moveDirection[1];
+}
+
+/**
  * Draw the scene.
  */
 function draw() {
@@ -219,12 +259,11 @@ function draw() {
 
     gl.uniformMatrix3fv(ctx.uTextureMatrixId, false, textureMatrix);
 
-
     // set the light
     gl.uniform1i(ctx.uEnableLightingId, 1);
     for (let light of scene.lights) {
-        //gl.uniform3fv(ctx.uLightPositionId, light.pos);
-        gl.uniform3fv(ctx.uLightPositionId, ball.position);
+        gl.uniform3fv(ctx.uLightPositionId, light.pos);
+        //gl.uniform3fv(ctx.uLightPositionId, ball.position);
         gl.uniform3fv(ctx.uLightColorId, light.color);
     }
 
@@ -292,6 +331,23 @@ function draw() {
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
     drawingObjects.wireFrame.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId);
+
+
+    // player paddle
+    gl.bindTexture(gl.TEXTURE_2D, textures.textureObject1); // use second texture
+    gl.uniform1i(ctx.uSamplerId, 0);
+    gl.uniformMatrix3fv(ctx.uTextureMatrixId, false, textureMatrix);
+    gl.uniformMatrix3fv(ctx.uTextureMatrixId, false, textureMatrix);
+
+    movePlayerPaddle();
+    mat4.translate(modelViewMatrix, viewMatrix, [playerPaddle.position[0],
+        playerPaddle.position[1], playerPaddle.position[2]]); // the limit of the z-axis towards the player is 2
+    mat4.scale(modelViewMatrix, modelViewMatrix, [3, 2, 0]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+
+    drawingObjects.playerPaddle.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId)
 }
 
 var first = true;
@@ -315,3 +371,28 @@ function drawAnimated ( timeStamp ) {
     // request the next frame
     window.requestAnimationFrame (drawAnimated);
 }
+
+/**
+ * Event listener for key presses
+ */
+document.addEventListener('keypress', (event) => {
+    console.log(event.keyCode);
+    if(event.keyCode == key.A) {
+        if(playerPaddle.moveDirection[0] > 0) {
+            playerPaddle.moveDirection[0] *= -1;
+        }
+    } else if (event.keyCode == key.D) {
+        if(playerPaddle.moveDirection[0] < 0) {
+            playerPaddle.moveDirection[0] *= -1;
+        }
+    } else if (event.keyCode == key.W) {
+        if(playerPaddle.moveDirection[1] < 0) {
+            playerPaddle.moveDirection[1] *= -1;
+        }
+    } else if (event.keyCode == key.S) {
+        if(playerPaddle.moveDirection[1] > 0) {
+            playerPaddle.moveDirection[1] *= -1;
+        }
+    }
+
+}, false);
