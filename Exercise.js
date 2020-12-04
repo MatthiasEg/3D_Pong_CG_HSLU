@@ -43,30 +43,38 @@ var scene = {
     farPlane: 30.0,
     fov: 65,
     lights: [
-        { pos:[0, 0, -4], color: [1,1,1] },
+        { pos:[0, 0, -10], color: [1,1,1] },
     ],
     rotateObjects: true,
     angle: 0,
     angularSpeed: 0.025 * 2 * Math.PI / 360.0
 };
 
-//ball
+// ball
 var ball = {
     position: [0, 0, 0],
     moveDirection: [0.08, 0.09, 0.07]
 };
 
+// player paddle
 var playerPaddle = {
     position : [0, 0, 2],
     moveDirection: [0.04, 0.04]
 }
 
-// defined object
+// BOT paddle
+var botPaddle = {
+    position : [0, 0, -6.5],
+    moveDirection: [0.08, 0.09]
+}
+
+// defined objects
 var drawingObjects = {
     solidCube: null,
     solidSphere: null,
     wireFrame: null,
-    playerPaddle: null
+    playerPaddle: null,
+    botPaddle: null
 };
 
 // Key Handling
@@ -86,7 +94,7 @@ function startup() {
     gl = createGLContext(canvas);
     initGL();
     loadTexture();
-    window.requestAnimationFrame (drawAnimated);
+    window.requestAnimationFrame(drawAnimated);
 }
 
 /**
@@ -145,6 +153,9 @@ function loadTexture() {
     image_paddle.src = "textures/stone_brick.jpeg";
 }
 
+/**
+ * Define objects that are drawn within the scene
+ */
 function defineObjects() {
     drawingObjects.solidCube = new SolidCube(gl,
         [1.0, 0.0, 0.0],
@@ -153,9 +164,15 @@ function defineObjects() {
         [1.0, 1.0, 0.0],
         [0.0, 1.0, 1.0],
         [1.0, 0.0, 1.0]);
-    drawingObjects.solidSphere = new SolidSphere(gl, 40, 40);
+    drawingObjects.solidSphere = new SolidSphere(gl, 50, 50);
     drawingObjects.wireFrame = new WireFrame(gl, [1.0, 1.0, 1.0, 1.0]);
     drawingObjects.playerPaddle = new SolidRectangle(gl, [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]);
+    drawingObjects.botPaddle = new SolidRectangle(gl, [0, 0, 0],
         [0, 0, 0],
         [0, 0, 0],
         [0, 0, 0],
@@ -202,7 +219,7 @@ function moveBall(){
         ball.moveDirection[2] *= -1;
     }
     //back
-    if (ball.position[2] <= -7) {
+    if (ball.position[2] <= -6.5) {
         ball.moveDirection[2] *= -1;
     }
 
@@ -225,6 +242,14 @@ function movePlayerPaddle() {
 
     playerPaddle.position[0] += playerPaddle.moveDirection[0];
     playerPaddle.position[1] += playerPaddle.moveDirection[1];
+}
+
+/**
+ * Calculate position of bot paddle
+ */
+function moveBotPaddle() {
+     botPaddle.position[0] = ball.position[0];
+     botPaddle.position[1] = ball.position[1];
 }
 
 /**
@@ -315,13 +340,14 @@ function draw() {
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
     drawingObjects.solidCube.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, ctx.aVertexTextureCoordId, textures.textureObject0);
 
-    // draw sphere
+    // draw ball
     moveBall()
-    mat4.translate(modelViewMatrix, viewMatrix, ball.position);
-    mat4.scale(modelViewMatrix, modelViewMatrix, [0.1, 0.1, 0.1]);
+    mat4.translate(modelViewMatrix, viewMatrix, [0.0, 0.0, -1.0]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [0.5, 0.5, 0.5]);
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+
     drawingObjects.solidSphere.drawWithColor(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, [1, 1, 1]);
 
     // frame of ball position
@@ -331,7 +357,6 @@ function draw() {
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
     drawingObjects.wireFrame.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId);
-
 
     // player paddle
     gl.bindTexture(gl.TEXTURE_2D, textures.textureObject1); // use second texture
@@ -348,11 +373,22 @@ function draw() {
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
 
     drawingObjects.playerPaddle.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId)
+
+    // bot paddle
+    moveBotPaddle()
+    mat4.translate(modelViewMatrix, viewMatrix, [botPaddle.position[0],
+        botPaddle.position[1], botPaddle.position[2]]); // the limit of the z-axis backwards is 6.5 (approx)
+    mat4.scale(modelViewMatrix, modelViewMatrix, [3, 2, 0]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+
+    drawingObjects.botPaddle.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId);
 }
 
 var first = true;
 var lastTimeStamp = 0;
-function drawAnimated ( timeStamp ) {
+function drawAnimated( timeStamp ) {
     var timeElapsed = 0;
     if (first) {
         lastTimeStamp = timeStamp;
@@ -367,9 +403,9 @@ function drawAnimated ( timeStamp ) {
     if (scene.angle > 2.0*Math.PI) {
         scene.angle -= 2.0*Math.PI;
     }
-    draw ();
+    draw();
     // request the next frame
-    window.requestAnimationFrame (drawAnimated);
+    window.requestAnimationFrame(drawAnimated);
 }
 
 /**
