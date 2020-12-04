@@ -90,7 +90,7 @@ var key = {
  */
 function startup() {
     "use strict";
-    var canvas = document.getElementById("myCanvas");
+    var canvas = document.getElementById("canvas");
     gl = createGLContext(canvas);
     initGL();
     loadTexture();
