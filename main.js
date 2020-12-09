@@ -53,7 +53,7 @@ var scene = {
 // ball
 var ball = {
     position: [0, 0, 0],
-    moveDirection: [0.08, 0.09, 0.07]
+    moveDirection: [0.06, 0.06, 0.04]
 };
 
 // player paddle
@@ -149,7 +149,7 @@ function loadTexture() {
         initTexture(image_paddle, textures.textureObject1);
     };
     // setting the src will trigger onload
-    image_walls.src = "textures/stone.jpeg";
+    image_walls.src = "textures/black.png";
     image_paddle.src = "textures/stone_brick.jpeg";
 }
 
@@ -165,14 +165,14 @@ function defineObjects() {
         [0.0, 1.0, 1.0],
         [1.0, 0.0, 1.0]);
     drawingObjects.solidSphere = new SolidSphere(gl, 50, 50);
-    drawingObjects.wireFrame = new WireFrame(gl, [1.0, 1.0, 1.0, 1.0]);
-    drawingObjects.playerPaddle = new SolidRectangle(gl, [0, 0, 0],
+    drawingObjects.wireFrame = new WireFrame(gl, [0, 255, 0]);
+    drawingObjects.playerPaddle = new SolidRectangle(gl, [0, 255, 0],
         [0, 0, 0],
         [0, 0, 0],
         [0, 0, 0],
         [0, 0, 0],
         [0, 0, 0]);
-    drawingObjects.botPaddle = new SolidRectangle(gl, [0, 0, 0],
+    drawingObjects.botPaddle = new SolidRectangle(gl, [0, 255, 0],
         [0, 0, 0],
         [0, 0, 0],
         [0, 0, 0],
@@ -211,11 +211,11 @@ function moveBall(){
     if (Math.abs(ball.position[0]) >= 2.4) {
         ball.moveDirection[0] *= -1;
     }
-    if (Math.abs(ball.position[1]) >= 2.4) {
+    if (Math.abs(ball.position[1]) >= 1.4) {
         ball.moveDirection[1] *= -1;
     }
     //front
-    if (ball.position[2] >= 2) {
+    if (ball.position[2] >= 1.1) {
         ball.moveDirection[2] *= -1;
     }
     //back
@@ -228,26 +228,18 @@ function moveBall(){
     ball.position[2] += ball.moveDirection[2];
 }
 
-/**
- * Calculate the movement of the player paddle
- */
-function movePlayerPaddle() {
-    if(Math.abs(playerPaddle.position[0]) >= 2.2) {
-        playerPaddle.moveDirection[0] *= -1;
-    }
-
-    if(Math.abs(playerPaddle.position[1]) >= 1.7) {
-        playerPaddle.moveDirection[1] *= -1;
-    }
-
-    playerPaddle.position[0] += playerPaddle.moveDirection[0];
-    playerPaddle.position[1] += playerPaddle.moveDirection[1];
-}
 
 /**
  * Calculate position of bot paddle
  */
 function moveBotPaddle() {
+    if(Math.abs(botPaddle.position[0]) >= 1.5) {
+        botPaddle.moveDirection[0] *= -1;
+    }
+
+    if(Math.abs(botPaddle.position[1]) >= 1.6) {
+        botPaddle.moveDirection[1] *= -1;
+    }
      botPaddle.position[0] = ball.position[0];
      botPaddle.position[1] = ball.position[1];
 }
@@ -287,9 +279,9 @@ function draw() {
     // set the light
     gl.uniform1i(ctx.uEnableLightingId, 1);
     for (let light of scene.lights) {
-        gl.uniform3fv(ctx.uLightPositionId, light.pos);
+        //gl.uniform3fv(ctx.uLightPositionId, light.pos);
         //gl.uniform3fv(ctx.uLightPositionId, ball.position);
-        gl.uniform3fv(ctx.uLightColorId, light.color);
+        //gl.uniform3fv(ctx.uLightColorId, light.color);
     }
 
     // same projection matrix for all drawings, so it can be specified here
@@ -340,15 +332,54 @@ function draw() {
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
     drawingObjects.solidCube.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, ctx.aVertexTextureCoordId, textures.textureObject0);
 
+    // disable texture for non-texture objects
+    gl.uniform1i(ctx.uEnableTextureId, 0);
+
     // draw ball
     moveBall()
-    mat4.translate(modelViewMatrix, viewMatrix, [0.0, 0.0, -1.0]);
-    mat4.scale(modelViewMatrix, modelViewMatrix, [0.5, 0.5, 0.5]);
+    mat4.translate(modelViewMatrix, viewMatrix, [0, 0, ball.position[2]]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [0.2, 0.2, 0.2]);
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
 
-    drawingObjects.solidSphere.drawWithColor(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, [1, 1, 1]);
+    drawingObjects.solidSphere.drawWithColor(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, [0, 255, 0]);
+
+    // frames
+    mat4.translate(modelViewMatrix, viewMatrix, [0, 0, -6.5]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [2.4, 2.4, 0]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+    drawingObjects.wireFrame.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId);
+
+    mat4.translate(modelViewMatrix, viewMatrix, [0, 0, -4.375]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [2.4, 2.4, 0]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+    drawingObjects.wireFrame.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId);
+
+    mat4.translate(modelViewMatrix, viewMatrix, [0, 0, -2.250]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [2.4, 2.4, 0]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+    drawingObjects.wireFrame.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId);
+
+    mat4.translate(modelViewMatrix, viewMatrix, [0, 0, 0.125]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [2.4, 2.4, 0]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+    drawingObjects.wireFrame.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId);
+
+    mat4.translate(modelViewMatrix, viewMatrix, [0, 0, 1.1]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [2.4, 2.4, 0]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+    drawingObjects.wireFrame.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId);
 
     // frame of ball position
     mat4.translate(modelViewMatrix, viewMatrix, [0, 0, ball.position[2]]);
@@ -364,7 +395,7 @@ function draw() {
     gl.uniformMatrix3fv(ctx.uTextureMatrixId, false, textureMatrix);
     gl.uniformMatrix3fv(ctx.uTextureMatrixId, false, textureMatrix);
 
-    movePlayerPaddle();
+    //movePlayerPaddle();
     mat4.translate(modelViewMatrix, viewMatrix, [playerPaddle.position[0],
         playerPaddle.position[1], playerPaddle.position[2]]); // the limit of the z-axis towards the player is 2
     mat4.scale(modelViewMatrix, modelViewMatrix, [3, 2, 0]);
@@ -412,22 +443,23 @@ function drawAnimated( timeStamp ) {
  * Event listener for key presses
  */
 document.addEventListener('keypress', (event) => {
-    console.log(event.keyCode);
+    var movementSize = 0.05;
+
     if(event.keyCode == key.A) {
-        if(playerPaddle.moveDirection[0] > 0) {
-            playerPaddle.moveDirection[0] *= -1;
+        if ((playerPaddle.position[0] - movementSize) > -1.55) {
+            playerPaddle.position[0] -= movementSize;
         }
     } else if (event.keyCode == key.D) {
-        if(playerPaddle.moveDirection[0] < 0) {
-            playerPaddle.moveDirection[0] *= -1;
+        if ((playerPaddle.position[0] + movementSize) < 1.55) {
+            playerPaddle.position[0] += movementSize;
         }
     } else if (event.keyCode == key.W) {
-        if(playerPaddle.moveDirection[1] < 0) {
-            playerPaddle.moveDirection[1] *= -1;
+        if((playerPaddle.position[1] + movementSize) < 1.65) {
+            playerPaddle.position[1] += movementSize;
         }
     } else if (event.keyCode == key.S) {
-        if(playerPaddle.moveDirection[1] > 0) {
-            playerPaddle.moveDirection[1] *= -1;
+        if((playerPaddle.position[1] + movementSize) > -1.55) {
+            playerPaddle.position[1] -= movementSize;
         }
     }
 
