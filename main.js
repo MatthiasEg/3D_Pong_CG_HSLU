@@ -53,12 +53,12 @@ var scene = {
 // ball
 var ball = {
     position: [0, 0, 0],
-    moveDirection: [0.06, 0.06, 0.04]
+    moveDirection: [0.03, 0.03, 0.03]
 };
 
 // player paddle
 var playerPaddle = {
-    position : [0, 0, 2],
+    position : [0, 0, 1.1],
     moveDirection: [0.04, 0.04]
 }
 
@@ -84,6 +84,11 @@ var key = {
     W: 119,
     S: 115,
 };
+
+var gameState = {
+    ball_hit : 0,
+    lives: 0
+}
 
 /**
  * Startup function to be called when the body is loaded
@@ -215,8 +220,10 @@ function moveBall(){
         ball.moveDirection[1] *= -1;
     }
     //front
-    if (ball.position[2] >= 1.1) {
+    if (ball.position[2] >= 1.1 && gameState.ball_hit == 1) {
         ball.moveDirection[2] *= -1;
+    } else if (ball.position[2] >= 1.1 ) {
+        ball.position = [0, 0, 0];
     }
     //back
     if (ball.position[2] <= -6.5) {
@@ -248,7 +255,13 @@ function moveBotPaddle() {
  * Checks if the player hit the ball or not
  */
 function collisionDetection() {
-    
+    if (((playerPaddle.position[0] > (ball.position[0] - 0.2)) && (playerPaddle.position[0] < (ball.position[0] + 0.2))) &&
+        ((playerPaddle.position[1] > (ball.position[1] - 0.2)) && (playerPaddle.position[1] < (ball.position[1] + 0.2)))) {
+        gameState.ball_hit = 1;
+    } else {
+        gameState.ball_hit = 0;
+    }
+
 }
 
 /**
@@ -343,7 +356,6 @@ function draw() {
     gl.uniform1i(ctx.uEnableTextureId, 0);
 
     // draw ball
-    moveBall()
     mat4.translate(modelViewMatrix, viewMatrix, ball.position);
     mat4.scale(modelViewMatrix, modelViewMatrix, [0.2, 0.2, 0.2]);
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
@@ -351,6 +363,10 @@ function draw() {
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
 
     drawingObjects.solidSphere.drawWithColor(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, [0, 255, 0]);
+
+    // move ball and check collision
+    moveBall();
+    collisionDetection();
 
     // frames
     mat4.translate(modelViewMatrix, viewMatrix, [0, 0, -6.5]);
@@ -402,9 +418,8 @@ function draw() {
     gl.uniformMatrix3fv(ctx.uTextureMatrixId, false, textureMatrix);
     gl.uniformMatrix3fv(ctx.uTextureMatrixId, false, textureMatrix);
 
-    //movePlayerPaddle();
     mat4.translate(modelViewMatrix, viewMatrix, [playerPaddle.position[0],
-        playerPaddle.position[1], playerPaddle.position[2]]); // the limit of the z-axis towards the player is 2
+        playerPaddle.position[1], playerPaddle.position[2]]);
     mat4.scale(modelViewMatrix, modelViewMatrix, [3, 2, 0]);
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
@@ -413,7 +428,6 @@ function draw() {
     drawingObjects.playerPaddle.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId)
 
     // bot paddle
-    moveBotPaddle()
     mat4.translate(modelViewMatrix, viewMatrix, [botPaddle.position[0],
         botPaddle.position[1], botPaddle.position[2]]); // the limit of the z-axis backwards is 6.5 (approx)
     mat4.scale(modelViewMatrix, modelViewMatrix, [3, 2, 0]);
@@ -422,6 +436,8 @@ function draw() {
     gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
 
     drawingObjects.botPaddle.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId);
+
+    moveBotPaddle()
 }
 
 var first = true;
@@ -453,19 +469,19 @@ document.addEventListener('keypress', (event) => {
     var movementSize = 0.05;
 
     if(event.keyCode == key.A) {
-        if ((playerPaddle.position[0] - movementSize) > -1.55) {
+        if ((playerPaddle.position[0] - movementSize) > -2.1) {
             playerPaddle.position[0] -= movementSize;
         }
     } else if (event.keyCode == key.D) {
-        if ((playerPaddle.position[0] + movementSize) < 1.55) {
+        if ((playerPaddle.position[0] + movementSize) < 2.1) {
             playerPaddle.position[0] += movementSize;
         }
     } else if (event.keyCode == key.W) {
-        if((playerPaddle.position[1] + movementSize) < 1.65) {
+        if((playerPaddle.position[1] + movementSize) < 2.2) {
             playerPaddle.position[1] += movementSize;
         }
     } else if (event.keyCode == key.S) {
-        if((playerPaddle.position[1] + movementSize) > -1.55) {
+        if((playerPaddle.position[1] + movementSize) > -2.2) {
             playerPaddle.position[1] -= movementSize;
         }
     }
