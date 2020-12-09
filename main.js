@@ -245,6 +245,13 @@ function moveBotPaddle() {
 }
 
 /**
+ * Checks if the player hit the ball or not
+ */
+function collisionDetection() {
+    
+}
+
+/**
  * Draw the scene.
  */
 function draw() {
@@ -337,7 +344,7 @@ function draw() {
 
     // draw ball
     moveBall()
-    mat4.translate(modelViewMatrix, viewMatrix, [0, 0, ball.position[2]]);
+    mat4.translate(modelViewMatrix, viewMatrix, ball.position);
     mat4.scale(modelViewMatrix, modelViewMatrix, [0.2, 0.2, 0.2]);
     gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
     mat3.normalFromMat4(normalMatrix, modelViewMatrix);
