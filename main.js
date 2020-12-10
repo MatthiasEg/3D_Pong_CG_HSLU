@@ -53,7 +53,8 @@ var scene = {
 // ball
 var ball = {
     position: [0, 0, 0],
-    moveDirection: [0.03, 0.03, 0.03]
+    moveDirection: [0.03, 0.03, 0.03],
+    speed: 0.0,
 };
 
 // player paddle
@@ -86,21 +87,24 @@ var key = {
     downPressed: 0,
     upPressed: 0,
     leftPressed: 0,
-    rightPressed: 0
+    rightPressed: 0,
 };
 
 var levels = [
-    {timeout_in_sec : 10, ball_speed: 0.6},
-    {timeout_in_sec : 20, ball_speed: 0.8},
-    {timeout_in_sec : 30, ball_speed: 1},
-    {timeout_in_sec : 30, ball_speed: 1.2},
-    {timeout_in_sec : 30, ball_speed: 1.4}
+    {timeout_in_sec : 10},
+    {timeout_in_sec : 20},
+    {timeout_in_sec : 30},
+    {timeout_in_sec : 30},
+    {timeout_in_sec : 30},
 ]
 
 var gameState = {
     ball_hit : 0,
     lives: 0,
-    current_level: 0
+    current_level: 0,
+    buffSlowBall: 0,      //0=deactivated, 1=positive buff, -1=negative buff
+    buffBigPaddle: 0,     //0=deactivated, 1=positive buff, -1=negative buff
+    buffSaveMode: 0       //0=deactivated, 1=positive buff, -1=negative buff
 }
 
 /**
@@ -220,7 +224,27 @@ function setUpAttributesAndUniforms(){
 
 function nextLevel() {
     gameState.current_level++;
-    console.log('Next level')
+    switch (gameState.current_level) {
+        case 1:
+            ball.speed = 0.6;
+            break;
+        case 2:
+            ball.speed = 0.8;
+            break;
+        case 3:
+            ball.speed = 1;
+            break;
+        case 4:
+            ball.speed = 1.2;
+            break;
+        case 5:
+            ball.speed = 1.4;
+            break;
+        default:
+            console.log('No matching level found');
+            break;
+    }
+    console.log('Level: ' + gameState.current_level)
 }
 
 
@@ -256,9 +280,23 @@ function moveBall(){
         ball.moveDirection[2] *= -1;
     }
 
-    ball.position[0] += ball.moveDirection[0] * levels[gameState.current_level].ball_speed;
-    ball.position[1] += ball.moveDirection[1] * levels[gameState.current_level].ball_speed;
-    ball.position[2] += ball.moveDirection[2] * levels[gameState.current_level].ball_speed;
+    ball.position[0] += ball.moveDirection[0] * ball.speed;
+    ball.position[1] += ball.moveDirection[1] * ball.speed;
+    ball.position[2] += ball.moveDirection[2] * ball.speed;
+}
+
+/**
+ * Apply the effects of buffs
+ */
+function applyBuffEffects(){
+    if(gameState.buffSlowBall === 1){
+        ball.speed = ball.speed * 0.8;
+        gameState.buffSlowBall = 0;
+    } else if (gameState.buffSlowBall === -1){
+        ball.speed = ball.speed * 1.2;
+        gameState.buffSlowBall = 0;
+    }
+
 }
 
 /**
@@ -413,6 +451,7 @@ function draw() {
 
     drawingObjects.solidSphere.drawWithColor(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, [0, 255, 0]);
 
+    applyBuffEffects();
     moveBall();
     collisionDetection();
     movePlayerPaddle();
