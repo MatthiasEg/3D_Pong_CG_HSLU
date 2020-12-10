@@ -10,6 +10,7 @@ window.onload = startup;
 // the gl object is saved globally
 var gl;
 
+
 // all parameters associated with the shader program
 var ctx = {
     shaderProgram: -1,
@@ -47,7 +48,7 @@ var scene = {
     ],
     rotateObjects: true,
     angle: 0,
-    angularSpeed: 0.025 * 2 * Math.PI / 360.0
+    angularSpeed: 0.025 * 2 * Math.PI / 360.0,
 };
 
 // ball
@@ -85,9 +86,19 @@ var key = {
     S: 115,
 };
 
+var levels = [
+    {timeout_in_sec : 10, ball_speed: 0.6},
+    {timeout_in_sec : 20, ball_speed: 0.8},
+    {timeout_in_sec : 30, ball_speed: 1},
+    {timeout_in_sec : 30, ball_speed: 1.2},
+    {timeout_in_sec : 30, ball_speed: 1.4}
+]
+
 var gameState = {
     ball_hit : 0,
-    lives: 0
+    lives: 0,
+    current_level: 1,
+    current_ball_speed_factor: 1
 }
 
 /**
@@ -99,6 +110,8 @@ function startup() {
     gl = createGLContext(canvas);
     initGL();
     loadTexture();
+
+    setTimeout(() => nextLevel(), levels[0].timeout_in_sec)
     window.requestAnimationFrame(drawAnimated);
 }
 
@@ -208,6 +221,19 @@ function setUpAttributesAndUniforms(){
     ctx.uEnableLightingId = gl.getUniformLocation(ctx.shaderProgram, "uEnableLighting");
 }
 
+function nextLevel() {
+    gameState.current_level++;
+    console.log('Next level')
+}
+
+
+// restart game
+function restart() {
+    ball.position = [0, 0, 0];
+    gameState.current_level = 0
+    console.log('Restart!!!')
+}
+
 /**
  * Calculate the movement of the ball
  */
@@ -219,20 +245,22 @@ function moveBall(){
     if (Math.abs(ball.position[1]) >= 1.4) {
         ball.moveDirection[1] *= -1;
     }
+
+
     //front
     if (ball.position[2] >= 1.1 && gameState.ball_hit == 1) {
         ball.moveDirection[2] *= -1;
     } else if (ball.position[2] >= 1.1 ) {
-        ball.position = [0, 0, 0];
+        restart();
     }
     //back
     if (ball.position[2] <= -6.5) {
         ball.moveDirection[2] *= -1;
     }
 
-    ball.position[0] += ball.moveDirection[0];
-    ball.position[1] += ball.moveDirection[1];
-    ball.position[2] += ball.moveDirection[2];
+    ball.position[0] += ball.moveDirection[0] * levels[gameState.current_level].ball_speed;
+    ball.position[1] += ball.moveDirection[1] * levels[gameState.current_level].ball_speed;
+    ball.position[2] += ball.moveDirection[2] * levels[gameState.current_level].ball_speed;
 }
 
 
@@ -364,9 +392,9 @@ function draw() {
 
     drawingObjects.solidSphere.drawWithColor(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId, [0, 255, 0]);
 
-    // move ball and check collision
     moveBall();
     collisionDetection();
+    moveBotPaddle();
 
     // frames
     mat4.translate(modelViewMatrix, viewMatrix, [0, 0, -6.5]);
@@ -437,7 +465,6 @@ function draw() {
 
     drawingObjects.botPaddle.draw(gl, ctx.aVertexPositionId, ctx.aVertexColorId, ctx.aVertexNormalId);
 
-    moveBotPaddle()
 }
 
 var first = true;
