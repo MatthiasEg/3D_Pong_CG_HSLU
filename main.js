@@ -79,10 +79,14 @@ var drawingObjects = {
 
 // Key Handling
 var key = {
-    A: 97,
-    D: 100,
-    W: 119,
-    S: 115,
+    UP: 38,
+    DOWN: 40,
+    LEFT: 37,
+    RIGHT: 39,
+    downPressed: 0,
+    upPressed: 0,
+    leftPressed: 0,
+    rightPressed: 0
 };
 
 var levels = [
@@ -109,6 +113,8 @@ function startup() {
     initGL();
     loadTexture();
 
+    window.addEventListener("keydown", keyDownHandler)
+    window.addEventListener("keyup", keyUpHandler);
     setTimeout(() => nextLevel(), levels[0].timeout_in_sec)
     window.requestAnimationFrame(drawAnimated);
 }
@@ -255,6 +261,29 @@ function moveBall(){
     ball.position[2] += ball.moveDirection[2] * levels[gameState.current_level].ball_speed;
 }
 
+/**
+ * Calculate position of player paddle
+ */
+function movePlayerPaddle() {
+    if(key.leftPressed == 1) {
+        if ((playerPaddle.position[0] - playerPaddle.moveDirection[0]) > -2.1) {
+            playerPaddle.position[0] -= playerPaddle.moveDirection[0];
+        }
+    } else if (key.rightPressed == 1) {
+        if ((playerPaddle.position[0] + playerPaddle.moveDirection[0]) < 2.1) {
+            playerPaddle.position[0] += playerPaddle.moveDirection[0];
+        }
+    } else if (key.upPressed == 1) {
+        if((playerPaddle.position[1] + playerPaddle.moveDirection[1]) < 2.2) {
+            playerPaddle.position[1] += playerPaddle.moveDirection[1];
+        }
+    } else if (key.downPressed == 1) {
+        if((playerPaddle.position[1] + playerPaddle.moveDirection[1]) > -2.2) {
+            playerPaddle.position[1] -= playerPaddle.moveDirection[1];
+        }
+    }
+}
+
 
 /**
  * Calculate position of bot paddle
@@ -275,8 +304,8 @@ function moveBotPaddle() {
  * Checks if the player hit the ball or not
  */
 function collisionDetection() {
-    if (((playerPaddle.position[0] > (ball.position[0] - 0.2)) && (playerPaddle.position[0] < (ball.position[0] + 0.2))) &&
-        ((playerPaddle.position[1] > (ball.position[1] - 0.2)) && (playerPaddle.position[1] < (ball.position[1] + 0.2)))) {
+    if (((playerPaddle.position[0] > (ball.position[0] - 0.3)) && (playerPaddle.position[0] < (ball.position[0] + 0.3))) &&
+        ((playerPaddle.position[1] > (ball.position[1] - 0.3)) && (playerPaddle.position[1] < (ball.position[1] + 0.3)))) {
         gameState.ball_hit = 1;
     } else {
         gameState.ball_hit = 0;
@@ -386,6 +415,7 @@ function draw() {
 
     moveBall();
     collisionDetection();
+    movePlayerPaddle();
     moveBotPaddle();
 
     // frames
@@ -481,28 +511,26 @@ function drawAnimated( timeStamp ) {
     window.requestAnimationFrame(drawAnimated);
 }
 
-/**
- * Event listener for key presses
- */
-document.addEventListener('keypress', (event) => {
-    var movementSize = 0.05;
-
-    if(event.keyCode == key.A) {
-        if ((playerPaddle.position[0] - movementSize) > -2.1) {
-            playerPaddle.position[0] -= movementSize;
-        }
-    } else if (event.keyCode == key.D) {
-        if ((playerPaddle.position[0] + movementSize) < 2.1) {
-            playerPaddle.position[0] += movementSize;
-        }
-    } else if (event.keyCode == key.W) {
-        if((playerPaddle.position[1] + movementSize) < 2.2) {
-            playerPaddle.position[1] += movementSize;
-        }
-    } else if (event.keyCode == key.S) {
-        if((playerPaddle.position[1] + movementSize) > -2.2) {
-            playerPaddle.position[1] -= movementSize;
-        }
+function keyDownHandler(event) {
+    if(event.keyCode == key.UP) {
+        key.upPressed = 1;
+    } else if (event.keyCode == key.DOWN) {
+        key.downPressed = 1;
+    } else if (event.keyCode == key.LEFT) {
+        key.leftPressed = 1;
+    } else if (event.keyCode == key.RIGHT) {
+        key.rightPressed = 1;
     }
+}
 
-}, false);
+function keyUpHandler(event) {
+    if(event.keyCode == key.UP) {
+        key.upPressed = 0;
+    } else if (event.keyCode == key.DOWN) {
+        key.downPressed = 0;
+    } else if (event.keyCode == key.LEFT) {
+        key.leftPressed = 0;
+    } else if (event.keyCode == key.RIGHT) {
+        key.rightPressed = 0;
+    }
+}
