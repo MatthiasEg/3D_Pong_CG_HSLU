@@ -31,8 +31,7 @@ var ctx = {
 
 // loaded textures
 var textures = {
-    textureObject0: {},
-    textureObject1: {}
+    textureObject0: {}
 };
 
 // parameters that define the scene
@@ -152,22 +151,15 @@ function initTexture(image, textureObject) {
  */
 function loadTexture() {
     var image_walls = new Image();
-    var image_paddle = new Image();
 
     // create a texture object
     textures.textureObject0 = gl.createTexture();
-    textures.textureObject1 = gl.createTexture();
     image_walls.onload = function() {
         console.log("Image for walls loaded");
         initTexture(image_walls, textures.textureObject0);
     };
-    image_paddle.onload = function () {
-        console.log("Image for paddles loaded");
-        initTexture(image_paddle, textures.textureObject1);
-    };
     // setting the src will trigger onload
-    image_walls.src = "textures/black.png";
-    image_paddle.src = "textures/stone_brick.jpeg";
+    image_walls.src = "textures/grey.png";
 }
 
 /**
@@ -327,9 +319,9 @@ function draw() {
     // set the light
     gl.uniform1i(ctx.uEnableLightingId, 1);
     for (let light of scene.lights) {
-        //gl.uniform3fv(ctx.uLightPositionId, light.pos);
+        gl.uniform3fv(ctx.uLightPositionId, light.pos);
         //gl.uniform3fv(ctx.uLightPositionId, ball.position);
-        //gl.uniform3fv(ctx.uLightColorId, light.color);
+        gl.uniform3fv(ctx.uLightColorId, light.color);
     }
 
     // same projection matrix for all drawings, so it can be specified here
