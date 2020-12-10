@@ -97,8 +97,7 @@ var levels = [
 var gameState = {
     ball_hit : 0,
     lives: 0,
-    current_level: 1,
-    current_ball_speed_factor: 1
+    current_level: 0
 }
 
 /**
@@ -238,6 +237,7 @@ function restart() {
  * Calculate the movement of the ball
  */
 function moveBall(){
+    scene.lights[0].pos = ball.position;
     //detect ball on top and bottom
     if (Math.abs(ball.position[0]) >= 2.4) {
         ball.moveDirection[0] *= -1;
