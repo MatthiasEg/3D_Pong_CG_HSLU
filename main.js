@@ -445,6 +445,7 @@ function collisionDetectionBuff() {
     // disableAllBuffs();
     // gameState.ball_hit = 0;
   }
+}
 function updateText() {
   // level +1 because zero based
   $("#currentLevelH1").text(
