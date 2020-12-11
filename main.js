@@ -36,14 +36,14 @@ var textures = {
 
 // parameters that define the scene
 var scene = {
-    eyePosition: [0, 0, 5],
+    eyePosition: [0, 0,5],
     lookAtPosition: [0, 0, 0],
     upVector: [0, 1, 0],
     nearPlane: 0.1,
     farPlane: 30.0,
     fov: 65,
     lights: [
-        { pos:[0, 0, -10], color: [1,1,1] },
+        { pos:[0, 0, 0], color: [1,1,1] },
     ],
     rotateObjects: true,
     angle: 0,
@@ -91,11 +91,11 @@ var key = {
 };
 
 var levels = [
-    {timeout_in_sec : 10},
-    {timeout_in_sec : 20},
-    {timeout_in_sec : 30},
-    {timeout_in_sec : 30},
-    {timeout_in_sec : 30},
+    {timeout_in_milisec : 10000, ball_speed_factor : 0.6},
+    {timeout_in_milisec : 20000, ball_speed_factor : 0.8},
+    {timeout_in_milisec : 30000, ball_speed_factor : 1.0},
+    {timeout_in_milisec : 30000, ball_speed_factor : 1.2},
+    {timeout_in_milisec : 30000, ball_speed_factor : 1.4},
 ]
 
 var gameState = {
@@ -104,7 +104,8 @@ var gameState = {
     current_level: 0,
     buffSlowBall: 0,      //0=deactivated, 1=positive buff, -1=negative buff
     buffBigPaddle: 0,     //0=deactivated, 1=positive buff, -1=negative buff
-    buffSaveMode: 0       //0=deactivated, 1=positive buff, -1=negative buff
+    buffSaveMode: 0,      //0=deactivated, 1=positive buff, -1=negative buff
+    timeout: 0            // timeout return value to reset
 }
 
 /**
@@ -119,7 +120,8 @@ function startup() {
 
     window.addEventListener("keydown", keyDownHandler)
     window.addEventListener("keyup", keyUpHandler);
-    setTimeout(() => nextLevel(), levels[0].timeout_in_sec)
+    gameState.timeout = setTimeout(() => nextLevel(), levels[0].timeout_in_milisec)
+    ball.speed = levels[0].ball_speed_factor;
     window.requestAnimationFrame(drawAnimated);
 }
 
@@ -224,26 +226,8 @@ function setUpAttributesAndUniforms(){
 
 function nextLevel() {
     gameState.current_level++;
-    switch (gameState.current_level) {
-        case 1:
-            ball.speed = 0.6;
-            break;
-        case 2:
-            ball.speed = 0.8;
-            break;
-        case 3:
-            ball.speed = 1;
-            break;
-        case 4:
-            ball.speed = 1.2;
-            break;
-        case 5:
-            ball.speed = 1.4;
-            break;
-        default:
-            console.log('No matching level found');
-            break;
-    }
+    ball.speed = levels[gameState.current_level].ball_speed_factor;
+    gameState.timeout = setTimeout(() => nextLevel(), levels[gameState.current_level].timeout_in_milisec);
     console.log('Level: ' + gameState.current_level)
 }
 
@@ -253,6 +237,9 @@ function restart() {
     ball.position = [0, 0, 0];
     gameState.current_level = 0
     console.log('Restart!!!')
+    clearTimeout(gameState.timeout) // reset timeout
+    gameState.timeout = setTimeout(() => nextLevel(), levels[gameState.current_level].timeout_in_milisec);
+    ball.speed = levels[gameState.current_level].ball_speed_factor;
 }
 
 /**
@@ -264,7 +251,7 @@ function moveBall(){
     if (Math.abs(ball.position[0]) >= 2.4) {
         ball.moveDirection[0] *= -1;
     }
-    if (Math.abs(ball.position[1]) >= 1.4) {
+    if (Math.abs(ball.position[1]) >= 2.4) {
         ball.moveDirection[1] *= -1;
     }
 
@@ -387,7 +374,6 @@ function draw() {
     gl.uniform1i(ctx.uEnableLightingId, 1);
     for (let light of scene.lights) {
         gl.uniform3fv(ctx.uLightPositionId, light.pos);
-        //gl.uniform3fv(ctx.uLightPositionId, ball.position);
         gl.uniform3fv(ctx.uLightColorId, light.color);
     }
 
