@@ -54,6 +54,13 @@ var ball = {
   speed: 0.0,
 };
 
+// buff
+var buff = {
+  position: [0, 0, 0],
+  moveDirection: [-0.03, -0.03, 0.03],
+  speed: 0.0,
+};
+
 // player paddle
 var playerPaddle = {
   position: [0, 0, 1.1],
@@ -73,6 +80,7 @@ var drawingObjects = {
   wireFrame: null,
   playerPaddle: null,
   botPaddle: null,
+  buff: null,
 };
 
 // Key Handling
@@ -124,6 +132,7 @@ function startup() {
   );
   gameState.startTimeLevel = new Date().getTime();
   ball.speed = levels[0].ball_speed_factor;
+  buff.speed = levels[0].ball_speed_factor;
   window.requestAnimationFrame(drawAnimated);
 }
 
@@ -180,6 +189,7 @@ function loadTexture() {
     console.log("Image for walls loaded");
     initTexture(image_walls, textures.textureObject0);
   };
+
   // setting the src will trigger onload
   image_walls.src = "textures/grey.png";
 }
@@ -217,6 +227,7 @@ function defineObjects() {
     [0, 0, 0],
     [0, 0, 0]
   );
+  drawingObjects.buff = new SolidSphere(gl, 50, 50);
 }
 
 /**
@@ -326,6 +337,23 @@ function moveBall() {
   ball.position[2] += ball.moveDirection[2] * ball.speed;
 }
 
+function moveBuff() {
+  if (Math.abs(buff.position[0]) >= 2.4) {
+    buff.moveDirection[0] *= -1;
+  }
+  if (Math.abs(buff.position[1]) >= 2.4) {
+    buff.moveDirection[1] *= -1;
+  }
+
+  if (buff.position[2] >= 1.1) {
+    buff.position = [0, 0, 0];
+  }
+
+  buff.position[0] += buff.moveDirection[0] * buff.speed;
+  buff.position[1] += buff.moveDirection[1] * buff.speed;
+  buff.position[2] += buff.moveDirection[2] * buff.speed;
+}
+
 /**
  * Apply the effects of buffs
  */
@@ -380,7 +408,7 @@ function moveBotPaddle() {
 /**
  * Checks if the player hit the ball or not
  */
-function collisionDetection() {
+function collisionDetectionBall() {
   if (
     playerPaddle.position[0] > ball.position[0] - 0.3 &&
     playerPaddle.position[0] < ball.position[0] + 0.3 &&
@@ -400,6 +428,23 @@ function calcRemainingTime() {
   );
 }
 
+/**
+ * Checks if the player hit the buff or not
+ */
+function collisionDetectionBuff() {
+  if (
+    playerPaddle.position[0] > buff.position[0] - 0.3 &&
+    playerPaddle.position[0] < buff.position[0] + 0.3 &&
+    playerPaddle.position[1] > buff.position[1] - 0.3 &&
+    playerPaddle.position[1] < buff.position[1] + 0.3
+  ) {
+    // enableRandomBuff();
+    gameState.buffBigPaddle = 1;
+    // gameState.ball_hit = 1;
+  } else {
+    // disableAllBuffs();
+    // gameState.ball_hit = 0;
+  }
 function updateText() {
   // level +1 because zero based
   $("#currentLevelH1").text(
@@ -559,7 +604,8 @@ function draw() {
 
   applyBuffEffects();
   moveBall();
-  collisionDetection();
+  collisionDetectionBall();
+  collisionDetectionBuff();
   movePlayerPaddle();
   moveBotPaddle();
   updateText();
@@ -648,6 +694,22 @@ function draw() {
     ctx.aVertexColorId,
     ctx.aVertexNormalId
   );
+  // draw buff
+  mat4.translate(modelViewMatrix, viewMatrix, buff.position);
+  mat4.scale(modelViewMatrix, modelViewMatrix, [0.2, 0.2, 0.2]);
+  gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+  mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+  gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+
+  drawingObjects.solidSphere.drawWithColor(
+    gl,
+    ctx.aVertexPositionId,
+    ctx.aVertexColorId,
+    ctx.aVertexNormalId,
+    [250, 227, 0]
+  );
+
+  moveBuff();
 }
 
 var first = true;
