@@ -105,7 +105,8 @@ var gameState = {
     buffSlowBall: 0,      //0=deactivated, 1=positive buff, -1=negative buff
     buffBigPaddle: 0,     //0=deactivated, 1=positive buff, -1=negative buff
     buffSaveMode: 0,      //0=deactivated, 1=positive buff, -1=negative buff
-    timeout: 0            // timeout return value to reset
+    timeout: 0,           // timeout return value to reset
+    startTimeLevel: 0
 }
 
 /**
@@ -121,6 +122,7 @@ function startup() {
     window.addEventListener("keydown", keyDownHandler)
     window.addEventListener("keyup", keyUpHandler);
     gameState.timeout = setTimeout(() => nextLevel(), levels[0].timeout_in_milisec)
+    gameState.startTimeLevel = (new Date()).getTime();
     ball.speed = levels[0].ball_speed_factor;
     window.requestAnimationFrame(drawAnimated);
 }
@@ -225,6 +227,7 @@ function setUpAttributesAndUniforms(){
 }
 
 function nextLevel() {
+    gameState.startTimeLevel = (new Date()).getTime();
     gameState.current_level++;
     ball.speed = levels[gameState.current_level].ball_speed_factor;
     gameState.timeout = setTimeout(() => nextLevel(), levels[gameState.current_level].timeout_in_milisec);
@@ -234,6 +237,7 @@ function nextLevel() {
 
 // restart game
 function restart() {
+    gameState.startTimeLevel = (new Date()).getTime();
     ball.position = [0, 0, 0];
     gameState.current_level = 0
     console.log('Restart!!!')
@@ -335,8 +339,16 @@ function collisionDetection() {
     } else {
         gameState.ball_hit = 0;
     }
-
 }
+function calcRemainingTime() {
+    return Math.abs((new Date()).getTime() - gameState.startTimeLevel - levels[gameState.current_level].timeout_in_milisec);
+}
+
+function updateText() {
+    // level +1 because zero based
+    $('#currentLevelH1').text(`Level ${gameState.current_level+1} - remaining time ${Math.round(calcRemainingTime()/1000)} Seconds`);
+}
+
 
 /**
  * Draw the scene.
@@ -442,6 +454,7 @@ function draw() {
     collisionDetection();
     movePlayerPaddle();
     moveBotPaddle();
+    updateText()
 
     // frames
     mat4.translate(modelViewMatrix, viewMatrix, [0, 0, -6.5]);
