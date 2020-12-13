@@ -57,14 +57,14 @@ var ball = {
 // buff
 var buff = {
   position: [0, 0, 0],
-  moveDirection: [-0.03, -0.03, 0.03],
+  moveDirection: [0.03, 0.03, 0.03],
   speed: 0.0,
 };
 
 // player paddle
 var playerPaddle = {
-  position: [0, 0, 1.1],
-  moveDirection: [0.04, 0.04],
+  position: [0, 0, 1.4],
+  moveDirection: [0.06, 0.06],
 };
 
 // BOT paddle
@@ -96,24 +96,27 @@ var key = {
 };
 
 var levels = [
-  { timeout_in_milisec: 10000, ball_speed_factor: 0.6 },
-  { timeout_in_milisec: 20000, ball_speed_factor: 0.8 },
-  { timeout_in_milisec: 30000, ball_speed_factor: 1.0 },
-  { timeout_in_milisec: 30000, ball_speed_factor: 1.2 },
-  { timeout_in_milisec: 30000, ball_speed_factor: 1.4 },
+  { timeout_in_milisec: 10000, ball_speed_factor: 0.6},
+  { timeout_in_milisec: 20000, ball_speed_factor: 0.8},
+  { timeout_in_milisec: 30000, ball_speed_factor: 1.0},
+  { timeout_in_milisec: 30000, ball_speed_factor: 1.2},
+  { timeout_in_milisec: 30000, ball_speed_factor: 1.4}
 ];
 
 var gameState = {
   ball_hit: 0,
+  buff_hit: 0,
   lives: 0,
   current_level: 0,
-  buffSlowBall: 0, //0=deactivated, 1=positive buff, -1=negative buff
-  buffBigPaddle: 0, //0=deactivated, 1=positive buff, -1=negative buff
-  buffSaveMode: 0, //0=deactivated, 1=positive buff, -1=negative buff
   timeout: 0, // timeout return value to reset
   startTimeLevel: 0,
 };
 
+var buff = {
+  ball_speeds: [0.2, 1.5, 0.2, 1.8],
+  position: [0, 0, 0],
+  moveDirection: [0.02, 0.02, 0.03],
+}
 /**
  * Startup function to be called when the body is loaded
  */
@@ -292,6 +295,8 @@ function nextLevel() {
     levels[gameState.current_level].timeout_in_milisec
   );
   console.log("Level: " + gameState.current_level);
+
+  // Hier einbauen, dass Buff nach bestimmter Zeit gespawnt wird...
 }
 
 // restart game
@@ -355,15 +360,26 @@ function moveBuff() {
 }
 
 /**
- * Apply the effects of buffs
+ * Generate random number
+ * @param min
+ * @param max
+ * @returns {number}
+ */
+function randomNumber(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * Apply the effects of buffs if they have been catched
  */
 function applyBuffEffects() {
-  if (gameState.buffSlowBall === 1) {
-    ball.speed = ball.speed * 0.8;
-    gameState.buffSlowBall = 0;
-  } else if (gameState.buffSlowBall === -1) {
-    ball.speed = ball.speed * 1.2;
-    gameState.buffSlowBall = 0;
+  if (gameState.buff_hit == 1) {
+    var random = randomNumber(0,3);
+
+    ball.speed = buff.ball_speeds[random]
+    gameState.buff_hit = 0
   }
 }
 
@@ -420,6 +436,11 @@ function collisionDetectionBall() {
     gameState.ball_hit = 0;
   }
 }
+
+/**
+ * Calculate remaining time
+ * @returns {number}
+ */
 function calcRemainingTime() {
   return Math.abs(
     new Date().getTime() -
@@ -438,14 +459,13 @@ function collisionDetectionBuff() {
     playerPaddle.position[1] > buff.position[1] - 0.3 &&
     playerPaddle.position[1] < buff.position[1] + 0.3
   ) {
-    // enableRandomBuff();
-    gameState.buffBigPaddle = 1;
-    // gameState.ball_hit = 1;
-  } else {
-    // disableAllBuffs();
-    // gameState.ball_hit = 0;
+    gameState.buff_hit = 1;
   }
 }
+
+/**
+ * Update Text
+ */
 function updateText() {
   // level +1 because zero based
   $("#currentLevelH1").text(
@@ -600,7 +620,7 @@ function draw() {
     ctx.aVertexPositionId,
     ctx.aVertexColorId,
     ctx.aVertexNormalId,
-    [0, 255, 0]
+    [255, 0, 0]
   );
 
   applyBuffEffects();
