@@ -106,6 +106,7 @@ var levels = [
 var gameState = {
   ball_hit: 0,
   buff_hit: 0,
+  spawn_buff: 0,
   lives: 0,
   current_level: 0,
   timeout: 0, // timeout return value to reset
@@ -136,7 +137,23 @@ function startup() {
   gameState.startTimeLevel = new Date().getTime();
   ball.speed = levels[0].ball_speed_factor;
   buff.speed = levels[0].ball_speed_factor;
+  window.setInterval(buffInterval, 5000);
   window.requestAnimationFrame(drawAnimated);
+}
+
+/**
+ * This methods is executed repeatedly in a given time interval
+ */
+function buffInterval() {
+  var interval = randomNumber(1000, 5000);
+  window.setTimeout(buffHandler, interval);
+}
+
+/**
+ * This method initiates a buff to spawn after a defined time interval
+ */
+function buffHandler() {
+  gameState.spawn_buff = 1;
 }
 
 /**
@@ -287,6 +304,9 @@ function setUpAttributesAndUniforms() {
 }
 
 function nextLevel() {
+  $("#buff").text(
+      ``
+  );
   gameState.startTimeLevel = new Date().getTime();
   gameState.current_level++;
   ball.speed = levels[gameState.current_level].ball_speed_factor;
@@ -295,8 +315,6 @@ function nextLevel() {
     levels[gameState.current_level].timeout_in_milisec
   );
   console.log("Level: " + gameState.current_level);
-
-  // Hier einbauen, dass Buff nach bestimmter Zeit gespawnt wird...
 }
 
 // restart game
@@ -304,8 +322,12 @@ function restart() {
   gameState.startTimeLevel = new Date().getTime();
   ball.position = [0, 0, 0];
   gameState.current_level = 0;
+  gameState.spawn_buff = 0;
   console.log("Restart!!!");
   clearTimeout(gameState.timeout); // reset timeout
+  $("#buff").text(
+      ``
+  );
   gameState.timeout = setTimeout(
     () => nextLevel(),
     levels[gameState.current_level].timeout_in_milisec
@@ -351,12 +373,16 @@ function moveBuff() {
   }
 
   if (buff.position[2] >= 1.1) {
-    buff.position = [0, 0, 0];
+    $("#buff").text(
+        ``
+    );
+    gameState.spawn_buff = 0;
+    var rand_x = randomNumber(-1,1);
+    var rand_y = randomNumber(-1,1);
+    buff.position = [rand_x, rand_y, -2];
+  } else {
+    buff.position[2] += buff.moveDirection[2] * buff.speed;
   }
-
-  buff.position[0] += buff.moveDirection[0] * buff.speed;
-  buff.position[1] += buff.moveDirection[1] * buff.speed;
-  buff.position[2] += buff.moveDirection[2] * buff.speed;
 }
 
 /**
@@ -379,6 +405,15 @@ function applyBuffEffects() {
     var random = randomNumber(0,3);
 
     ball.speed = buff.ball_speeds[random]
+    if(ball.speed > levels[gameState.current_level].ball_speed_factor) {
+      $("#buff").text(
+          `Increased speed`
+      );
+    } else {
+      $("#buff").text(
+          `Decreased speed`
+      );
+    }
     gameState.buff_hit = 0
   }
 }
@@ -429,7 +464,9 @@ function collisionDetectionBall() {
     playerPaddle.position[0] > ball.position[0] - 0.3 &&
     playerPaddle.position[0] < ball.position[0] + 0.3 &&
     playerPaddle.position[1] > ball.position[1] - 0.3 &&
-    playerPaddle.position[1] < ball.position[1] + 0.3
+    playerPaddle.position[1] < ball.position[1] + 0.3 &&
+    playerPaddle.position[2] > ball.position[2] - 0.3 &&
+    playerPaddle.position[2] < ball.position[2] + 0.3
   ) {
     gameState.ball_hit = 1;
   } else {
@@ -454,10 +491,12 @@ function calcRemainingTime() {
  */
 function collisionDetectionBuff() {
   if (
-    playerPaddle.position[0] > buff.position[0] - 0.3 &&
-    playerPaddle.position[0] < buff.position[0] + 0.3 &&
-    playerPaddle.position[1] > buff.position[1] - 0.3 &&
-    playerPaddle.position[1] < buff.position[1] + 0.3
+      playerPaddle.position[0] > buff.position[0] - 0.3 &&
+      playerPaddle.position[0] < buff.position[0] + 0.3 &&
+      playerPaddle.position[1] > buff.position[1] - 0.3 &&
+      playerPaddle.position[1] < buff.position[1] + 0.3 &&
+      playerPaddle.position[2] > buff.position[2] - 0.3 &&
+      playerPaddle.position[2] < buff.position[2] + 0.3
   ) {
     gameState.buff_hit = 1;
   }
@@ -715,22 +754,25 @@ function draw() {
     ctx.aVertexColorId,
     ctx.aVertexNormalId
   );
+
   // draw buff
-  mat4.translate(modelViewMatrix, viewMatrix, buff.position);
-  mat4.scale(modelViewMatrix, modelViewMatrix, [0.2, 0.2, 0.2]);
-  gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
-  mat3.normalFromMat4(normalMatrix, modelViewMatrix);
-  gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
+  if(gameState.spawn_buff == 1) {
+    mat4.translate(modelViewMatrix, viewMatrix, buff.position);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [0.2, 0.2, 0.2]);
+    gl.uniformMatrix4fv(ctx.uModelViewMatrixId, false, modelViewMatrix);
+    mat3.normalFromMat4(normalMatrix, modelViewMatrix);
+    gl.uniformMatrix3fv(ctx.uNormalMatrixId, false, normalMatrix);
 
-  drawingObjects.solidSphere.drawWithColor(
-    gl,
-    ctx.aVertexPositionId,
-    ctx.aVertexColorId,
-    ctx.aVertexNormalId,
-    [250, 227, 0]
-  );
+    drawingObjects.solidSphere.drawWithColor(
+        gl,
+        ctx.aVertexPositionId,
+        ctx.aVertexColorId,
+        ctx.aVertexNormalId,
+        [250, 227, 0]
+    );
 
-  moveBuff();
+    moveBuff();
+  }
 }
 
 var first = true;
