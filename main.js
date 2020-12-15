@@ -557,7 +557,9 @@ function draw() {
   // set the light
   gl.uniform1i(ctx.uEnableLightingId, 1);
   for (let light of scene.lights) {
-    gl.uniform3fv(ctx.uLightPositionId, light.pos);
+    let cameraPos = vec3.create()
+    vec3.transformMat4(cameraPos, light.pos, viewMatrix);
+    gl.uniform3fv(ctx.uLightPositionId, cameraPos);
     gl.uniform3fv(ctx.uLightColorId, light.color);
   }
 
